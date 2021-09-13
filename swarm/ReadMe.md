@@ -263,3 +263,108 @@ BUG_REPORT_URL="https://bugs.alpinelinux.org/"
 ```
 
 ![](img/registry_iam.jpg)
+
+## Replicate  2 Redis
+Creditss: Bùi Hiên và Phạm Hùng
+
+Triển khai redis cluster trên 2 node:
+1. Node master ở máy ảo manager01
+2. Node slave ở máy áo manager02
+
+Đầu tiên cần tạo folder trên để mount data redis trên 2 máy áo này:
+```
+$ vagrant ssh manager01
+```
+Trong máy ảo `manager01` tạo thư mục
+```
+$ mkdir /home/vagrant/redis
+```
+
+Vào `manager02`
+```
+$ vagrant ssh manager02
+```
+Trong máy ảo `manager02` tạo thư mục
+```
+$ mkdir /home/vagrant/redis
+```
+
+Trên ứng dụng Portainer vào phần Stack > Add Stack triển khai file Docker-compose.yml như dưới
+
+```yaml
+version: "3.8"
+networks:
+  my-network:
+    external: false
+services:
+  redis-master: #tên service
+    image: redis:alpine #tên image
+    command: redis-server --requirepass 123 # set password cho redis
+    ports:
+      - "6379:6379" # ánh xạ cổng 6379 của container ra ngoài cổng 6379 trên máy host
+    volumes:
+      - /home/vagrant/redis:/data # mount volume từ thư mục /data của container ra ngoài thư mục /home/vagrant/redis trên máy host
+    networks:
+      - my-network # network overlay để các container trong Network này có thể giao tiếp được với nhau
+    deploy:
+      placement:
+        constraints: # Chỉ định node quản lý
+          - node.role == manager
+          - node.hostname == manager01
+  redis-slave-1: #tên service
+    image: redis:alpine #tên image
+    command: redis-server --masterauth 123 --slaveof redis-master 6379
+    depends_on:
+      - redis-master
+    ports:
+      - "6380:6379" # ánh xạ cổng 6379 của container ra ngoài cổng 6380 trên máy host
+    volumes:
+      - /home/vagrant/redis:/data # mount volume từ thư mục /data của container ra ngoài thư mục /home/vagrant/redis trên máy host
+    networks:
+      - my-network # Network overlay để các container trong Network này có thể giao tiếp được với nhau
+    deploy:
+      placement:
+        constraints: # Chỉ định node quản lý
+          - node.role == manager
+          - node.hostname == manager02
+```
+
+#### Cài đặt redis-cli trên manager01
+```
+$ sudo -i
+# add-apt-repository ppa:redislabs/redis
+# apt update
+# apt install redis-tools
+```
+
+#### Tạo key ở master Redis
+Kết nối vào redis ở `manager01:6379`
+```
+$ redis-cli -h manager01 -p 6379 -a 123
+```
+
+Tạo key `foo` có giá trị `Bar`
+```
+manager01:6379> SET foo "Bar"
+```
+
+#### Tạo SSH session khác ở `manager01` để đọc key từ slave Redis
+Kết nối vào redis ở `manager02:6380`
+```
+$ redis-cli -h manager02 -p 6380 -a 123
+```
+
+Lấy giá trị `foo`
+```
+manager02:6380> GET foo
+"Bar"
+```
+
+Như vậy khi set key ở Master Redis, chúng ta đọc được key ở Slave Redis
+
+## Replicate Postgresql
+
+
+## Triển khai Traefik
+
+## Cấu hình Docker Secret
