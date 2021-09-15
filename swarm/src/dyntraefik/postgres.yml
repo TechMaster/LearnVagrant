@@ -1,0 +1,11 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    ...
+    secrets:
+      - pg_password
+      - pg_user
+      - pg_database

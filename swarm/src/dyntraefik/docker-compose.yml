@@ -1,0 +1,68 @@
+version: '3'
+networks: 
+  techmaster:
+      external: true
+
+services:
+  gateway:
+    image: traefik:v2.5
+    networks: 
+      - techmaster
+    command:
+      - '--api.dashboard=true'
+      - '--api.insecure=false'
+      - '--providers.docker=true'
+      - '--entryPoints.web.address=:80'
+      - '--entryPoints.api.address=:8080'
+      - '--providers.docker.watch=true'
+      - '--providers.docker.swarmMode=true'
+      - '--providers.docker.swarmModeRefreshSeconds=30s'
+      - '--providers.docker.exposedbydefault=false'
+      #- '--log.level=DEBUG'
+
+    ports:      
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"                             
+        - "traefik.http.routers.dashboard.rule=Host(`localhost`)"
+        - "traefik.http.routers.dashboard.service=api@internal"   
+        - "traefik.http.routers.dashboard.entrypoints=api"      
+        - "traefik.http.routers.dashboard.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.users=cuong:$$2y$$10$$A6vuYpsxe.NPH2wHtPdflOgDjHGScxSbrq0YqKgmJ3E8HmS7kzWVC"
+        - "traefik.http.services.gateway.loadbalancer.server.port=8080"
+
+  whoami:
+    image: traefik/whoami
+    networks: 
+      - techmaster
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.whoami.rule=Host(`localhost`)"
+        - "traefik.http.routers.whoami.entrypoints=web"
+        - "traefik.http.services.whoami.loadbalancer.server.port=80"
+        - "traefik.http.routers.whoami.service=whoami"
+       
+
+  iam:
+    image: manager02:5000/iam:0.1.5
+    networks: 
+      - techmaster
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.iam.rule=Host(`iris.com`)"
+        - "traefik.http.services.iam.loadbalancer.server.port=8001"
+        - "traefik.http.routers.iam.service=iam"
+        - "traefik.http.routers.iam.entrypoints=web"
+        
+  
+
+# docker stack deploy -c docker-compose.yml traefik

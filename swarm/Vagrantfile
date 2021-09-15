@@ -14,7 +14,6 @@ WORKER_IP = ["192.168.33.4"]
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     #Common setup
     config.vm.box = BOX_NAME
-    config.vm.synced_folder "./src", "/src"
     config.vm.provider PROVIDER do |vb|
       vb.memory = MEMORY
       vb.cpus = CPUS
@@ -23,8 +22,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     (1..MANAGERS).each do |i|
         config.vm.define "manager0#{i}" do |manager|
           manager.vm.network :private_network, ip: MANAGER_IP[i-1]
+          manager.vm.synced_folder "./src", "/src"
           manager.vm.hostname = "manager0#{i}"
-          if i == 1  # Server Manager đầu tiên của Docker Swarm      
+          if i == 1  # Server Manager đầu tiên của Docker Swarm
+            manager.vm.provider PROVIDER do |pmv|
+              pmv.memory = 4096
+            end
+            manager.vm.network :forwarded_port, guest: 80, host: 80
+            manager.vm.network :forwarded_port, guest: 443, host: 443
             manager.vm.network :forwarded_port, guest: 9000, host: 9000
             manager.vm.network :forwarded_port, guest: 8080, host: 8080
             manager.vm.network :forwarded_port, guest: 8000, host: 8000

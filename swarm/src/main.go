@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"time"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -28,13 +29,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	result += string(out)
-
+	fmt.Println(time.Now())
 	_, _ = fmt.Fprintf(w, result)
 }
 
 func main() {
-
 	http.HandleFunc("/", handler)
-	fmt.Println("Listen at 8001")
+	fmt.Println("Lắng nghe ở cổng 8001")
 	log.Fatal(http.ListenAndServe(":8001", nil))
 }

@@ -159,7 +159,7 @@ services:
 
 ## Deploy Docker Registry
 Triển khai docker registry ở đúng node `manager02` xem lệnh `constraints: [node.hostname == manager02]`
-
+[dc.registry.yml](src/dc.registry.yml)
 ```yaml
 version: "3.8"
 services:
@@ -170,10 +170,14 @@ services:
      - "5000:5000"
     deploy:
       placement:
-        constraints: [node.hostname == manager02]
+        constraints: 
+          - node.hostname == manager02
 
 ```
-
+Gõ lệnh triển khai trong manager01 hoặc manager02
+```
+$ docker stack deploy --compose-file dc.registry.yml registry
+```
 ## Cấu hình cho phép truy cập insecured Docker Registry
 Docker Registry server mặc định yêu cầu HTTPs để phục vụ. Trong môi trường thử nghiệm Vagrant trên local, không bật được HTTPS thì chúng ta cấu hình kết nối vào insecured docker registry.
 
@@ -220,6 +224,8 @@ $ docker image push manager02:5000/iam:latest
 
 
 ## Deploy ứng dụng Golang trong máy ảo Vagrant
+Sau khi đã push được `manager02:5000/iam:latest` lên registry ở `manager02:5000`, chúng ta deploy stack.
+
 Hiện tại Vagrant tạo ra 3 máy ảo Ubuntu 18.x lần lượt là:
 - manager01
 - manager02
@@ -233,11 +239,18 @@ Trong file [Vagrantfile](Swarm/Vagrantfile) có đoạn lệnh cấu hình như 
 config.vm.synced_folder "./src", "/src"
 ```
 
-Nó map thư mục [/src](/src) vào thư mục src của máy ảo. Có thể tuỳ biến synced_folder cho từng máy ảo một.
+#### docker push image và kiểm tra danh sách repositories trên registry
 
-Xem chi tiết ở [src](src/ReadMe.md)
+```
+$ docker build . -t manager02:5000/iam:0.1.0
+$ docker image push manager02:5000/iam:0.1.0
 
-Sau khi đã push thành công `manager02:5000/iam:latest`
+$ curl -X GET https://manager02:5000/v2/_catalog
+{"repositories":["iam"]}
+
+$ curl -X GET http://manager02:5000/v2/iam/tags/list
+{"name":"iam","tags":["latest","0.1.0"]}
+```
 
 Thì tạo Stack với Docker-compose như sau
 
@@ -246,7 +259,7 @@ version: "3.8"
 
 services:
    iam:
-    image: manager02:5000/iam:latest
+    image: manager02:5000/iam:0.1.1
     ports:
     - "8001:8001"
 ```
@@ -264,107 +277,56 @@ BUG_REPORT_URL="https://bugs.alpinelinux.org/"
 
 ![](img/registry_iam.jpg)
 
-## Replicate  2 Redis
-Creditss: Bùi Hiên và Phạm Hùng
+## Fail Over và Round Robin Load  Balancing
 
-Triển khai redis cluster trên 2 node:
-1. Node master ở máy ảo manager01
-2. Node slave ở máy áo manager02
+Ở bài trên chúng ta đã deploy thành công ứng dụng Golang Web `iam`. Câu hỏi đặt ra là:
+- Làm thế nào để tăng tính High Availability của web site
+- Làm thế nào để phân bổ tải giúp web site phục vụ được nhiều request hơn?
 
-Đầu tiên cần tạo folder trên để mount data redis trên 2 máy áo này:
-```
-$ vagrant ssh manager01
-```
-Trong máy ảo `manager01` tạo thư mục
-```
-$ mkdir /home/vagrant/redis
-```
+Docker Swarm hỗ trợ việc nhân bản scale từ một bản thành nhiều bản
+![](img/iam_scale2.jpg)
 
-Vào `manager02`
-```
-$ vagrant ssh manager02
-```
-Trong máy ảo `manager02` tạo thư mục
-```
-$ mkdir /home/vagrant/redis
-```
+iam được lập trình để log ra màn hình console khi có truy cập đến
+![](img/iam_log.jpg)
 
-Trên ứng dụng Portainer vào phần Stack > Add Stack triển khai file Docker-compose.yml như dưới
+Mặc chúng ta tạo ra 2 replica iam nhưng thực tế Docker Swarm luôn chuyển tất cả request đến một replica duy nhất. Nhưng vậy yêu cầu Round Robin Load Balancing là không đạt được.
+
+Khi thử pause một container thì nhận thấy rằng Docker Swarm đã chuyển hướng thành công request đến container đang chạy. Như vậy yêu cầu Fail Over đạt được.
+
+![](img/iam_fail_over.jpg)
+
+## Round Robin Load Balancing với Traefik
+
+Tình hình là không thể đòi hỏi quá nhiều ở Docker Swarm. Giờ chúng ta dùng tiếp võ Traefik !
+Hãy xem file docker-compose [src/dc.traefik.yml](src/dc.traefik.yml)
 
 ```yaml
-version: "3.8"
-networks:
-  my-network:
-    external: false
+version: '3'
+
 services:
-  redis-master: #tên service
-    image: redis:alpine #tên image
-    command: redis-server --requirepass 123 # set password cho redis
-    ports:
-      - "6379:6379" # ánh xạ cổng 6379 của container ra ngoài cổng 6379 trên máy host
+  reverse-proxy:
+    image: traefik:v2.5
+    ports:      
+      - "80:80"
+      - "8080:8080"
     volumes:
-      - /home/vagrant/redis:/data # mount volume từ thư mục /data của container ra ngoài thư mục /home/vagrant/redis trên máy host
-    networks:
-      - my-network # network overlay để các container trong Network này có thể giao tiếp được với nhau
-    deploy:
-      placement:
-        constraints: # Chỉ định node quản lý
-          - node.role == manager
-          - node.hostname == manager01
-  redis-slave-1: #tên service
-    image: redis:alpine #tên image
-    command: redis-server --masterauth 123 --slaveof redis-master 6379
-    depends_on:
-      - redis-master
-    ports:
-      - "6380:6379" # ánh xạ cổng 6379 của container ra ngoài cổng 6380 trên máy host
-    volumes:
-      - /home/vagrant/redis:/data # mount volume từ thư mục /data của container ra ngoài thư mục /home/vagrant/redis trên máy host
-    networks:
-      - my-network # Network overlay để các container trong Network này có thể giao tiếp được với nhau
-    deploy:
-      placement:
-        constraints: # Chỉ định node quản lý
-          - node.role == manager
-          - node.hostname == manager02
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  iam:
+    image: manager02:5000/iam:0.1.0
+    labels:
+      - "traefik.http.routers.iam.rule=Host(`localhost`) && PathPrefix(`/iam`)"
+      - "traefik.http.services.iam.loadbalancer.server.port=8001"
 ```
 
-#### Cài đặt redis-cli trên manager01
-```
-$ sudo -i
-# add-apt-repository ppa:redislabs/redis
-# apt update
-# apt install redis-tools
-```
-
-#### Tạo key ở master Redis
-Kết nối vào redis ở `manager01:6379`
-```
-$ redis-cli -h manager01 -p 6379 -a 123
-```
-
-Tạo key `foo` có giá trị `Bar`
-```
-manager01:6379> SET foo "Bar"
-```
-
-#### Tạo SSH session khác ở `manager01` để đọc key từ slave Redis
-Kết nối vào redis ở `manager02:6380`
-```
-$ redis-cli -h manager02 -p 6380 -a 123
-```
-
-Lấy giá trị `foo`
-```
-manager02:6380> GET foo
-"Bar"
-```
-
-Như vậy khi set key ở Master Redis, chúng ta đọc được key ở Slave Redis
-
-## Replicate Postgresql
+https://youtu.be/Pc7k_ZgSdVk
 
 
-## Triển khai Traefik
+Chạy lệnh
+```
+$ docker stack deploy --compose-file dc.traefik.yml traefik_iam
+```
 
-## Cấu hình Docker Secret
+Tham khảo
+- [Traefik Proxy with HTTPS](https://dockerswarm.rocks/traefik/)
