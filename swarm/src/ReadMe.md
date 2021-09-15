@@ -1,34 +1,60 @@
-docker build . -t iam:latest
-docker run -d --name iam -p 8001:8001 iam:latest
 
+# Triển khai hệ thống gồm Traefik và một vài dịch vụ
 
-docker image tag iam:latest manager02:5000/iam:latest
-docker image push manager02:5000/iam:latest
+1. Traefik Gateway
+2. traefik/whoami
+3. iam
 
-Hiện đang gặp lỗi vì chưa hỗ trợ https
+## Build docker image iam
+```
+$ docker build . -t iam:latest
+$ docker image tag iam:latest manager02:5000/iam:latest
+$ docker image push manager02:5000/iam:latest
+```
+
+### Nếu gặp lỗi khi push
 ```
 The push refers to repository [manager02:5000/iam]
 Get https://manager02:5000/v2/: http: server gave HTTP response to HTTPS client
 ```
 
-```
-$ docker build . -t iam:0.1.0
-$ docker image tag iam:0.1.1 manager02:5000/iam:0.1.1
-$ docker image push manager02:5000/iam:0.1.1
+## Cấu hình cho phép truy cập insecured Docker Registry
+Docker Registry server mặc định yêu cầu HTTPs để phục vụ. Trong môi trường thử nghiệm Vagrant trên local, không bật được HTTPS thì chúng ta cấu hình kết nối vào insecured docker registry.
 
+Kết nối SSH vào manager01
+```
+$ vagrant ssh manager01
+```
+
+Chuyển sang root rồi tạo file `/etc/docker/daemon.json`
+```
+$ sudo -i
+$ nano /etc/docker/daemon.json
+```
+
+Thêm nội dung như sau
+```json
+{
+    "insecure-registries" : [ "manager02:5000" ]
+}
+```
+
+## Kiểm tra lại docker registry
 $ curl -X GET https://manager02:5000/v2/_catalog
 {"repositories":["iam"]}
 
 $ curl -X GET http://manager02:5000/v2/iam/tags/list
-{"name":"iam","tags":["latest","0.1.1"]}
+{"name":"iam","tags":["latest"]}
 
-docker stack deploy --compose-file docker-compose.iam.yml iam
+## Deploy cả stack
 
+```
+$ docker stack deploy -c docker-compose.yml traefik
+```
 
-docker service create \
-  --name iam \
-  --publish published=8001,target=8001 \
-  --replicas 2 \
-  manager02:5000/iam:0.1.1
+## Thử nghiệm
 
-  docker stack deploy --compose-file redis-ha.yml redis-ha
+Vào địa chỉ
+- http://localhost
+- http://iris.com
+- http://localhost:8080

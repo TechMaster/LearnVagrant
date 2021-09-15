@@ -52,7 +52,7 @@ services:
        
 
   iam:
-    image: manager02:5000/iam:0.1.5
+    image: manager02:5000/iam:latest
     networks: 
       - techmaster
     deploy:

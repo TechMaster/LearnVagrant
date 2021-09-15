@@ -1,7 +1,0 @@
-version: "3.8"
-
-services:
-   iam:
-    image: manager02:5000/iam:0.1.1
-    ports:
-    - "8001:8001"
