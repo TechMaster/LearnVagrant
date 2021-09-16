@@ -1,0 +1,27 @@
+version: "3.8"
+
+networks: 
+  techmaster:  # Khai báo sử dụng networks techmaster ở bên ngoài
+    external: true
+
+secrets:
+  pgpass:
+    external: true
+
+services:
+  whoami:
+    image: "manager02:5000/main:latest"
+    networks: 
+      - techmaster  #Join to traefik network
+    environment:
+      PGPASS_FILE: /run/secrets/pgpass
+    secrets:
+      - pgpass
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.whoami.rule=Host(`techmaster.com`) && PathPrefix(`/whoami`)"
+        - "traefik.docker.network=techmaster"
+        - "traefik.http.routers.whoami.entrypoints=web"
+        - "traefik.http.services.whoami.loadbalancer.server.port=8001"
+        - "traefik.http.routers.whoami.service=whoami"

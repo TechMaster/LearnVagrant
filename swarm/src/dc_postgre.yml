@@ -1,0 +1,45 @@
+version: "3.8"
+networks: 
+  techmaster:  # Khai báo sử dụng networks techmaster ở bên ngoài
+      external: true
+  techmaster_backend:  # Khai báo sử dụng networks techmaster ở bên ngoài
+      external: true
+
+volumes:
+  db_tech:
+
+secrets:
+  pg_user:
+    external: true
+  pg_password:
+    external: true
+
+services:
+  postgres:
+    image: postgres:latest
+    networks: 
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    volumes:
+      - db_tech:/var/lib/postgresql/data
+    secrets:
+      - pg_user
+      - pg_password
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/pg_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+
+  pgadmin:
+    image: dpage/pgadmin4
+    networks: 
+      - techmaster # Kết nối với Traefik và các dịch vụ web khác
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    environment:
+      PGADMIN_DEFAULT_EMAIL: cuong@techmaster.vn
+      PGADMIN_DEFAULT_PASSWORD: 123
+    deploy:
+      labels:
+        - "traefik.enable=true"                             
+        - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.techmaster.com`)"
+        - "traefik.http.routers.pgadmin.service=pgadmin"   
+        - "traefik.http.routers.pgadmin.entrypoints=web"      
+        - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
