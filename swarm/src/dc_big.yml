@@ -1,0 +1,91 @@
+version: "3.8"
+networks: 
+  techmaster:  # Khai báo sử dụng networks techmaster ở bên ngoài
+      external: true
+  techmaster_backend:  # Khai báo sử dụng networks techmaster ở bên ngoài
+      external: true
+
+services:
+  main:
+    image: manager02:5000/main:latest
+    networks: 
+      - techmaster # Kết nối với Traefik và các dịch vụ web khác
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.main.rule=Host(`techmaster.com`)"
+        - "traefik.http.routers.main.entrypoints=web"
+        - traefik.docker.network=techmaster
+        - "traefik.http.services.main.loadbalancer.server.port=8001"
+        - "traefik.http.routers.main.service=main"
+
+  admin:
+    image: manager02:5000/admin:latest
+    networks: 
+      - techmaster # Kết nối với Traefik và các dịch vụ web khác
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.admin.rule=Host(`techmaster.com`) && PathPrefix(`/admin`)"
+        - "traefik.http.routers.admin.entrypoints=web"
+        - traefik.docker.network=techmaster
+        - "traefik.http.services.admin.loadbalancer.server.port=8002"
+        - "traefik.http.routers.admin.service=admin"
+  
+  teacher:
+    image: manager02:5000/teacher:latest
+    networks: 
+      - techmaster # Kết nối với Traefik và các dịch vụ web khác
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.teacher.rule=Host(`techmaster.com`) && PathPrefix(`/teacher`)"
+        - "traefik.http.routers.teacher.entrypoints=web"
+        - traefik.docker.network=techmaster
+        - "traefik.http.services.teacher.loadbalancer.server.port=8003"
+        - "traefik.http.routers.teacher.service=teacher"
+
+  user:
+    image: manager02:5000/user:latest
+    networks: 
+      - techmaster # Kết nối với Traefik và các dịch vụ web khác
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.user.rule=Host(`techmaster.com`) && PathPrefix(`/user`)"
+        - "traefik.http.routers.user.entrypoints=web"
+        - traefik.docker.network=techmaster
+        - "traefik.http.services.user.loadbalancer.server.port=8004"
+        - "traefik.http.routers.user.service=user"
+
+  video:
+    image: manager02:5000/video:latest
+    networks: 
+      - techmaster # Kết nối với Traefik và các dịch vụ web khác
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.video.rule=Host(`techmaster.com`) && PathPrefix(`/video`)"
+        - "traefik.http.routers.video.entrypoints=web"
+        - traefik.docker.network=techmaster
+        - "traefik.http.services.video.loadbalancer.server.port=8005"
+        - "traefik.http.routers.video.service=video"
+
+  media:
+    image: manager02:5000/media:latest
+    networks: 
+      - techmaster # Kết nối với Traefik và các dịch vụ web khác
+      - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.media.rule=Host(`techmaster.com`) && PathPrefix(`/media`)"
+        - "traefik.http.routers.media.entrypoints=web"
+        - traefik.docker.network=techmaster
+        - "traefik.http.services.media.loadbalancer.server.port=8006"
+        - "traefik.http.routers.media.service=media"

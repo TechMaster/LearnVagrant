@@ -1,0 +1,50 @@
+version: "3.8"
+networks: 
+  techmaster:  # Khai báo sử dụng networks techmaster ở bên ngoài
+      external: true
+
+  registry_net:
+      external: false
+
+services:
+  registry:
+    image: "registry:latest"
+    ports:
+     - "5000:5000"
+    networks:
+      - registry_net
+    volumes:
+      - /home/vagrant/registry-data:/var/lib/registry
+    environment:
+      - REGISTRY_HTTP_SECRET=caigiday
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    deploy:
+      placement:
+        constraints: 
+          - node.hostname == manager02  # Chỉ triển khai trên manager02
+  registryui:
+    image: joxit/docker-registry-ui:latest
+    environment:
+      - REGISTRY_TITLE=Techmaster Registry
+      - NGINX_PROXY_PASS_URL=http://registry:5000
+      - DELETE_IMAGES=true
+      - SINGLE_REGISTRY=true
+    depends_on:
+      - registry
+    networks:
+      - techmaster  #Join to traefik network
+      - registry_net
+    deploy:
+      placement:
+        constraints: 
+          - node.hostname == manager02  # Chỉ triển khai trên manager02
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.registryui.rule=Host(`registry.techmaster.com`)"
+        - traefik.docker.network=techmaster
+        - "traefik.http.routers.registryui.entrypoints=web"
+        - "traefik.http.services.registryui.loadbalancer.server.port=80"
+        - "traefik.http.routers.registryui.service=registryui"
+        - "traefik.http.routers.registryui.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.users=cuong:$$2y$$10$$A6vuYpsxe.NPH2wHtPdflOgDjHGScxSbrq0YqKgmJ3E8HmS7kzWVC"
+
