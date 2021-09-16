@@ -214,3 +214,61 @@ services:
     command:
       - '--log.level=DEBUG'  # Hãy loại bỏ dòng này sau khi Traefik đã chạy ổn định !
 ```
+
+## 5. Sửa lại đường dẫn http://localchost:8080 -> http://dashboard.techmaster.com
+
+Nhìn đường dẫn đến Traefik Dashboard rất thiếu chuyên nghiệp và khó nhớ http://localchost:8080/dashboard. Giờ thử đổi sang http://dashboard.techmaster.com
+
+Bản cũ
+```yaml
+deploy:
+  placement:
+    constraints:
+      - node.hostname == manager01
+  labels:
+    - "traefik.enable=true"                             
+    - "traefik.http.routers.dashboard.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
+    - "traefik.http.routers.dashboard.service=api@internal"   
+    - "traefik.http.routers.dashboard.entrypoints=api"      
+    - "traefik.http.routers.dashboard.middlewares=auth"
+    - "traefik.http.middlewares.auth.basicauth.users=cuong:$$2y$$10$$A6vuYpsxe.NPH2wHtPdflOgDjHGScxSbrq0YqKgmJ3E8HmS7kzWVC"
+    - "traefik.http.services.gateway.loadbalancer.server.port=8080"
+```
+
+Chỉnh sửa file [src/dc_traefik.yml](src/dc_traefik.yml)
+
+Phần `gateway.commands`:
+```yaml
+services:
+  gateway:
+    image: traefik:v2.5
+    networks: 
+      - techmaster
+    command:
+      - '--entrypoints.api.http.redirections.entryPoint.to=web' # Redirect request đến entry point api sang web
+```
+
+Phần `deploy.labels`:
+```yaml
+deploy:
+      placement:
+        constraints:
+          - node.hostname == manager01
+      labels:
+        - "traefik.enable=true"                             
+        - "traefik.http.routers.dashboard.rule=Host(`dashboard.techmaster.com`)"
+        - "traefik.http.routers.dashboard.service=api@internal"   
+        - "traefik.http.routers.dashboard.entrypoints=web"      
+        - "traefik.http.routers.dashboard.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.users=cuong:$$2y$$10$$A6vuYpsxe.NPH2wHtPdflOgDjHGScxSbrq0YqKgmJ3E8HmS7kzWVC"
+        - "traefik.http.services.gateway.loadbalancer.server.port=8080"
+```
+
+Cuối cùng là chỉnh lại `/etc/hosts` ở hệ điều hành ngoài cùng
+```
+127.0.0.1 techmaster.com
+127.0.0.1 registry.techmaster.com
+127.0.0.1 dashboard.techmaster.com
+```
+
+> Kết luận: việc redirect đường dẫn này khá lòng vòng nhưng chứng minh một điều Traefik làm được những tác vụ khó.

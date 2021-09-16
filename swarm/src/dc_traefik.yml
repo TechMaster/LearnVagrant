@@ -18,6 +18,7 @@ services:
       - '--providers.docker.swarmMode=true'
       - '--providers.docker.swarmModeRefreshSeconds=30s'
       - '--providers.docker.exposedbydefault=false'
+      - '--entrypoints.api.http.redirections.entryPoint.to=web' # Redirect từ entry point api sang web
       #- '--log.level=DEBUG'
 
     ports:      
@@ -31,9 +32,9 @@ services:
           - node.hostname == manager01
       labels:
         - "traefik.enable=true"                             
-        - "traefik.http.routers.dashboard.rule=Host(`localhost`)"
+        - "traefik.http.routers.dashboard.rule=Host(`dashboard.techmaster.com`)"
         - "traefik.http.routers.dashboard.service=api@internal"   
-        - "traefik.http.routers.dashboard.entrypoints=api"      
+        - "traefik.http.routers.dashboard.entrypoints=web"      
         - "traefik.http.routers.dashboard.middlewares=auth"
         - "traefik.http.middlewares.auth.basicauth.users=cuong:$$2y$$10$$A6vuYpsxe.NPH2wHtPdflOgDjHGScxSbrq0YqKgmJ3E8HmS7kzWVC"
         - "traefik.http.services.gateway.loadbalancer.server.port=8080"
