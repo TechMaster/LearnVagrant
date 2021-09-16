@@ -3,12 +3,12 @@ version: '3.8'
 networks:
   agent_network:
     driver: overlay
-    attachable: true
+  techmaster:
+    external: true
 
 volumes:
   portainer_data:
 
-  
 services:
   agent:
     image: portainer/agent
@@ -32,10 +32,17 @@ services:
       - portainer_data:/data
     networks:
       - agent_network
+      - techmaster  #Join to traefik network để route http://portainer.techmaster.com
     deploy:
       mode: replicated
       replicas: 1
       placement:
-        constraints: [node.role == manager]
-
-
+        constraints: 
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"                             
+        - "traefik.http.routers.portainer.rule=Host(`portainer.techmaster.com`)"
+        - "traefik.http.routers.portainer.service=portainer"   
+        - "traefik.http.routers.portainer.entrypoints=web"
+        - "traefik.docker.network=techmaster"
+        - "traefik.http.services.portainer.loadbalancer.server.port=9000"

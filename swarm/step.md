@@ -275,4 +275,8 @@ Cuối cùng là chỉnh lại `/etc/hosts` ở hệ điều hành ngoài cùng
 
 > Kết luận: việc redirect đường dẫn này khá lòng vòng nhưng chứng minh một điều Traefik làm được những tác vụ khó.
 
+## 6. Xu ly cac loi hay gap
+docker service ps --no-trunc portainer_portainer
+
+
 ## 6. Sử dụng Docker Secret

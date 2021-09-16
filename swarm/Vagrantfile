@@ -22,6 +22,8 @@ cat >> /etc/docker/daemon.json <<EOL
   "insecure-registries" : [ "manager02:5000" ]
 }
 EOL
+systemctl daemon-reload
+systemctl restart docker
 SCRIPT
 
 @setup02 = <<SCRIPT
@@ -37,6 +39,8 @@ cat >> /etc/docker/daemon.json <<EOL
   "insecure-registries" : [ "manager02:5000" ]
 }
 EOL
+systemctl daemon-reload
+systemctl restart docker
 SCRIPT
 
 @setup03 = <<SCRIPT
@@ -51,6 +55,8 @@ cat >> /etc/docker/daemon.json <<EOL
   "insecure-registries" : [ "manager02:5000" ]
 }
 EOL
+systemctl daemon-reload
+systemctl restart docker
 SCRIPT
 
 #------ Khởi động 3 máy ảo 
@@ -66,7 +72,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         config.vm.define "manager0#{i}" do |manager|
           manager.vm.network :private_network, ip: MANAGER_IP[i-1]          
           manager.vm.hostname = "manager0#{i}"
-          manager.vm.synced_folder "./src", "/src"
+          manager.vm.synced_folder "./src", "/home/vagrant/src"
           if i == 1  # Server Manager đầu tiên của Docker Swarm
             manager.vm.provider PROVIDER do |pmv|
               pmv.memory = 4096
