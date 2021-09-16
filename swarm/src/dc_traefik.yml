@@ -18,7 +18,7 @@ services:
       - '--providers.docker.swarmMode=true'
       - '--providers.docker.swarmModeRefreshSeconds=30s'
       - '--providers.docker.exposedbydefault=false'
-      - '--log.level=DEBUG'
+      #- '--log.level=DEBUG'
 
     ports:      
       - "80:80"

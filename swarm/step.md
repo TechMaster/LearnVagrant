@@ -36,8 +36,14 @@ Khởi động xong vào http://localhost:8080 login với cuong/minh009-
 
 ## 2. Docker Registry và Registry UI
 
-Dịch vụ `registry` để lưu các docker image
-Dịch vụ `registryui` để liệt kê danh sách các docker image mà dịch vụ `registry` đang lưu
+- Dịch vụ `registry` để lưu các docker image
+- Dịch vụ `registryui` để liệt kê danh sách các docker image mà dịch vụ `registry` đang lưu
+
+Triển khai stack registry
+```
+cd /src
+docker stack deploy -c dc_registry.yml registry`
+```
 
 Xem file [src/dc_registry.yml](src/dc_registry.yml). Chú ý registryui tham gia vào 2 mạng:
 - Mạng nội bộ `registry_net` cùng với registry để đọc danh sách các Docker image
@@ -144,3 +150,67 @@ Hoàn toàn không!
 ```
 
 Trang main gồm có đường dẫn http://techmaster.com và http://techmaster.com/blog route rất nhanh, hoàn toàn không có biểu hiện bị lag
+
+## 5. Kiểm thử tải cho vui
+
+Đường dẫn `http://techmaster.com/blog` chỉ trả về duy nhất một dòng. Cơ bản nó là web site tối giản
+```
+$ curl http://techmaster.com/blog
+This is blog in main site
+```
+
+Hãy tạo ra các request để kiểm thử tải
+```
+hey -n 10000 -c 100 http://techmaster.com/blog
+```
+**Kết quả như sau**
+```
+Summary:
+  Total:	4.6649 secs
+  Slowest:	0.2070 secs
+  Fastest:	0.0016 secs
+  Average:	0.0452 secs
+  Requests/sec:	2143.6605
+
+  Total data:	247900 bytes
+  Size/request:	25 bytes
+
+Response time histogram:
+  0.002 [1]	|
+  0.022 [2697]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.043 [2524]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.063 [2216]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.084 [1340]	|■■■■■■■■■■■■■■■■■■■■
+  0.104 [660]	|■■■■■■■■■■
+  0.125 [298]	|■■■■
+  0.145 [129]	|■■
+  0.166 [43]	|■
+  0.186 [7]	|
+  0.207 [1]	|
+```
+
+Việc thử tải trên một laptop không có ý nghĩa nhiều lắm. Tuy nhiên nó giúp ta biết được phần resolve DNS, routing của Traefik là ok.
+
+**Traefik debug log làm chậm tốc độ đi rất nhiều**
+![](img/traefik_debug_log.jpg)
+
+Tốc độ định tuyến của Traefik nhanh hơn gấp 2 khi không ghi log
+
+```
+Summary:
+  Total:	2.0564 secs
+  Slowest:	0.0691 secs
+  Fastest:	0.0013 secs
+  Average:	0.0202 secs
+  Requests/sec:	4862.8784
+```
+
+```yaml
+services:
+  gateway:
+    image: traefik:v2.5
+    networks: 
+      - techmaster
+    command:
+      - '--log.level=DEBUG'  # Hãy loại bỏ dòng này sau khi Traefik đã chạy ổn định !
+```
