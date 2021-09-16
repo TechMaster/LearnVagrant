@@ -21,6 +21,9 @@ if i == 1  # Server Manager đầu tiên của Docker Swarm
 end
 ```
 
+#### Chuẩn bị tối thiểu 2 overlay network `techmaster` và `techmaster_backend`
+![](img/docker_network.jpg)
+
 ## 1. Traefik Gateway
 Triển khai traefik gateway bắt buộc phải ở manager01 vì chỉ có manager01 mới có mapping port 80, 8080 ra ngoài host
 ```
@@ -62,9 +65,32 @@ deploy:
 ![](img/Docker_Registry_UI.jpg)
 
 ## 3. Triển khai nhiều web site để quản lý trong traefik
+Việc đầu tiên cần phải build được các docker image trên máy ảo `manager01`. Trong [Vagrantfile](Vagrantfile) máy ảo này cũng được cấu hình nhiều RAM hơn.
+
+SSH vào `manager01` chạy lệnh build tất cả các Docker image của web sites rồi push lên `manager02:5000`
+```
+vagrant ssh manager01
+cd /src/big
+make build
+```
+Cấu trúc thư mục [/src/big](src/big) như sau:
+```
+├── admin
+├── main
+├── media
+├── teacher
+├── user
+├── video
+├── Makefile
+└── ReadMe.md
+```
+
+Tiếp đó deploy stack các web sites. Chú ý ở 3 máy ảo `manager01`, `manager02` và `manager03` cần chỉnh file `/etc/hosts` để nó có DNS record `192.168.33.3 manager02`. Cấu hình này sẽ giúp docker ở các máy ảo có thể kết nối vào `manager02:5000` để tải về Docker image
+
 ```
 docker stack deploy -c dc_big.yml websites
 ```
+
 Xem file [src/dc_big.yml](src/dc_big.yml). Quy tắc routing như sau
 1. http://techmaster.com --> main port 8001
 2. http://techmaster.com/blog --> main port 8001

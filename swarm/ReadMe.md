@@ -80,11 +80,11 @@ ihiwerjs86p7uv3czx7x91obl     worker01    Ready     Active                      
     ```
 2. Gõ lệnh này sau đây để lấy file `portainer-agent-stack.yml`
    ```
-   $ curl -L https://downloads.portainer.io/portainer-agent-stack.yml -o portainer-agent-stack.yml
+   $ curl -L https://downloads.portainer.io/portainer-agent-stack.yml -o dc_portainer.yml
    ```
 3. Gõ lệnh này tiếp theo để triển khai stack
    ```
-   $ docker stack deploy -c portainer-agent-stack.yml portainer
+   $ docker stack deploy -c dc_portainer.yml portainer
    ```
 
 ## Điều khiển portainer qua http://localhost:9000
@@ -159,7 +159,7 @@ services:
 
 ## Deploy Docker Registry
 Triển khai docker registry ở đúng node `manager02` xem lệnh `constraints: [node.hostname == manager02]`
-[dc.registry.yml](src/dc.registry.yml)
+[dc_registry.yml](src/dc_registry.yml)
 ```yaml
 version: "3.8"
 services:
@@ -174,10 +174,12 @@ services:
           - node.hostname == manager02
 
 ```
-Gõ lệnh triển khai trong manager01 hoặc manager02
+Gõ lệnh triển khai registry manager02
 ```
-$ docker stack deploy --compose-file dc.registry.yml registry
+$ docker stack deploy --compose-file dc_registry.yml registry
 ```
+
+
 ## Cấu hình cho phép truy cập insecured Docker Registry
 Docker Registry server mặc định yêu cầu HTTPs để phục vụ. Trong môi trường thử nghiệm Vagrant trên local, không bật được HTTPS thì chúng ta cấu hình kết nối vào insecured docker registry.
 
