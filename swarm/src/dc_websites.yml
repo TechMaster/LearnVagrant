@@ -12,6 +12,8 @@ services:
       - techmaster # Kết nối với Traefik và các dịch vụ web khác
       - techmaster_backend  # Dùng để kết nối vào Postgresql, Redis, TaskQueue
     deploy:
+      mode: replicated
+      replicas: 2 # Tạo 2 replicas cho yên tâm
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.main.rule=Host(`techmaster.com`)"

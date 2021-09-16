@@ -1,4 +1,10 @@
+# Triển khai Vagrant > Docker Swarm > Traefik
+
+[Bài chi tiết hướng dẫn triển khai hệ thống phức tạp](step.md)
+
 Tham khảo [Learn Docker Swarm with Vagrant](https://levelup.gitconnected.com/learn-docker-swarm-with-vagrant-47dd52b57bcc)
+
+
 ## Khởi tạo 3 máy ảo
 ```
 $ vagrant up

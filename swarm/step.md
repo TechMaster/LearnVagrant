@@ -42,7 +42,7 @@ Khởi động xong vào http://localhost:8080 login với cuong/minh009-
 Triển khai stack registry
 ```
 cd /src
-docker stack deploy -c dc_registry.yml registry`
+docker stack deploy -c dc_registry.yml registry
 ```
 
 Xem file [src/dc_registry.yml](src/dc_registry.yml). Chú ý registryui tham gia vào 2 mạng:
@@ -97,7 +97,7 @@ Tiếp đó deploy stack các web sites. Chú ý ở 3 máy ảo `manager01`, `m
 docker stack deploy -c dc_big.yml websites
 ```
 
-Xem file [src/dc_big.yml](src/dc_big.yml). Quy tắc routing như sau
+Xem file [src/dc_websites.yml](src/dc_websites.yml). Quy tắc routing như sau
 1. http://techmaster.com --> main port 8001
 2. http://techmaster.com/blog --> main port 8001
 3. http://techmaster.com/admin --> admin port 8002
@@ -264,11 +264,15 @@ deploy:
         - "traefik.http.services.gateway.loadbalancer.server.port=8080"
 ```
 
+
 Cuối cùng là chỉnh lại `/etc/hosts` ở hệ điều hành ngoài cùng
 ```
 127.0.0.1 techmaster.com
 127.0.0.1 registry.techmaster.com
 127.0.0.1 dashboard.techmaster.com
 ```
+![](img/DashboardReroute.jpg)
 
 > Kết luận: việc redirect đường dẫn này khá lòng vòng nhưng chứng minh một điều Traefik làm được những tác vụ khó.
+
+## 6. Sử dụng Docker Secret

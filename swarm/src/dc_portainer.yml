@@ -1,5 +1,14 @@
-version: '3.2'
+version: '3.8'
 
+networks:
+  agent_network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  portainer_data:
+
+  
 services:
   agent:
     image: portainer/agent
@@ -29,10 +38,4 @@ services:
       placement:
         constraints: [node.role == manager]
 
-networks:
-  agent_network:
-    driver: overlay
-    attachable: true
 
-volumes:
-  portainer_data:

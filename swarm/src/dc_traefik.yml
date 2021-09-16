@@ -1,12 +1,12 @@
-version: '3'
+version: '3.8'
 networks: 
   techmaster:
-      external: true
+    external: true
 
 services:
   gateway:
     image: traefik:v2.5
-    networks: 
+    networks:
       - techmaster
     command:
       - '--api.dashboard=true'

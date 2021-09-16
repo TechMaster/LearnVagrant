@@ -53,7 +53,6 @@ cat >> /etc/docker/daemon.json <<EOL
 EOL
 SCRIPT
 
-#------ Khởi động 3 máy ảo 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     #Common setup
     config.vm.box = BOX_NAME
