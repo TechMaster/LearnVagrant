@@ -227,7 +227,7 @@ deploy:
       - node.hostname == manager01
   labels:
     - "traefik.enable=true"                             
-    - "traefik.http.routers.dashboard.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
+    - "traefik.http.routers.dashboard.rule=Host(`localhost`)"
     - "traefik.http.routers.dashboard.service=api@internal"   
     - "traefik.http.routers.dashboard.entrypoints=api"      
     - "traefik.http.routers.dashboard.middlewares=auth"
