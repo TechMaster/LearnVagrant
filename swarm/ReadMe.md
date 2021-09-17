@@ -66,3 +66,10 @@ hoặc bật logs ở `service.gateway.command '--log.level=DEBUG'` trong file [
 Việc định tuyến chập chờn hoặc chậm, hãy kiểm tra xem cấu hình DNS ở /etc/hosts máy chủ ngoài cùng, 3 máy ảo bên trong đã ok chưa.
 
 Khi không push được image lên registry `manager02:5000` kiểm tra ở các máy ảo đã có file `/etc/docker/daemon.json` cho phép dùng HTTP chưa.
+
+
+Khi gặp lỗi khởi động Vagrant hãy thử
+```
+$ vagrant destroy
+```
+Nếu vẫn có lỗi, hãy vào thư mục 

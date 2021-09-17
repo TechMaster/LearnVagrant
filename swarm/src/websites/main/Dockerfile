@@ -4,9 +4,7 @@ FROM golang:alpine AS build-env
 
 WORKDIR /app
 
-COPY go.mod .
-
-COPY main.go .
+COPY . .
 
 RUN go mod tidy
 
@@ -23,6 +21,7 @@ WORKDIR /app
 
 # Copy result binary go app to /app folder
 COPY --from=build-env /app/main /app
+COPY --from=build-env /app/config.product.json /app
 
 
 ENTRYPOINT ["./main"]

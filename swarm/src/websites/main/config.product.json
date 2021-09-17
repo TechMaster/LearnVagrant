@@ -1,0 +1,32 @@
+{
+    "host": "http://localhost:9001",
+    "port": ":9001",
+    "secret": "@@secret", 
+    "database": {
+        "user": "postgres",
+        "password": "@@pg_password", 
+        "database": "iris",
+        "address": "postgres:5432"
+    },
+    "redis": {
+        "network": "tcp",
+        "addr": "redis:6379",
+        "password": "@@redis_password",
+        "database": "",
+        "max_idle": 0,
+        "max_active": 0,
+        "idle_timeout": 5,
+        "prefix": ""
+    },
+    "authenticate": {
+        "max_access_failed": 5,
+        "lockout_in_minutes": 1,
+        "black_list_token_in_days": -10
+    },
+    "smtp": {
+        "Host": "smtp.gmail.com",
+        "From": "@@smtp_from",
+        "Password": "@@smtp_password",
+        "Port": 587    
+    }
+}

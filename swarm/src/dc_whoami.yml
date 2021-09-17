@@ -5,7 +5,18 @@ networks:
     external: true
 
 secrets:
-  pgpass:
+  pgpass: 
+    external: true
+    
+  pg_password: 
+    external: true
+  redis_password:
+    external: true
+  secret:
+    external: true
+  smtp_from:
+    external: true
+  smtp_password:
     external: true
 
 services:
@@ -13,10 +24,13 @@ services:
     image: "manager02:5000/main:latest"
     networks: 
       - techmaster  #Join to traefik network
-    environment:
-      PGPASS_FILE: /run/secrets/pgpass
     secrets:
       - pgpass
+      - pg_password
+      - redis_password
+      - secret
+      - smtp_from
+      - smtp_password
     deploy:
       labels:
         - "traefik.enable=true"

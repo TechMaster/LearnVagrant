@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"main/config"
 	"net/http"
 	"os/exec"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +32,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	result += string(out)
+	result += "----------------------------\n"
+
+	result += viper.GetString("database.password")
+
 	fmt.Println(time.Now())
 	_, _ = fmt.Fprintf(w, result)
 }
@@ -39,8 +46,12 @@ func bloghandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", handler)
-	http.HandleFunc("/blog", bloghandler)
-	fmt.Println("Lắng nghe ở cổng 8001")
-	log.Fatal(http.ListenAndServe(":8001", nil))
+	config.ReadConfig()
+	/*	http.HandleFunc("/", handler)
+		http.HandleFunc("/blog", bloghandler)
+		fmt.Println("Lắng nghe ở cổng 8001")
+		log.Fatal(http.ListenAndServe(":8001", nil))*/
+
+	fmt.Println("---")
+	fmt.Println(viper.GetString("database.password"))
 }
