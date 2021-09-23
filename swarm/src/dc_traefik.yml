@@ -13,7 +13,7 @@ services:
       - '--api.insecure=false'
       - '--providers.docker=true'
       - '--entryPoints.web.address=:80'
-      - '--entryPoints.api.address=:8080'
+      - '--entryPoints.api.address=:9999'
       - '--providers.docker.watch=true'
       - '--providers.docker.swarmMode=true'
       - '--providers.docker.swarmModeRefreshSeconds=30s'
