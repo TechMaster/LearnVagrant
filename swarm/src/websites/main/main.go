@@ -47,11 +47,8 @@ func bloghandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	config.ReadConfig()
-	/*	http.HandleFunc("/", handler)
-		http.HandleFunc("/blog", bloghandler)
-		fmt.Println("Lắng nghe ở cổng 8001")
-		log.Fatal(http.ListenAndServe(":8001", nil))*/
-
-	fmt.Println("---")
-	fmt.Println(viper.GetString("database.password"))
+	http.HandleFunc("/", handler)
+	http.HandleFunc("/blog", bloghandler)
+	fmt.Println("Lắng nghe ở cổng 8001")
+	log.Fatal(http.ListenAndServe(":8001", nil))
 }
